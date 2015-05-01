@@ -1,6 +1,6 @@
 autoloaders:
-  Meanbee: %module%/src
+  Meanbee\DownloadRemoteMedia: %module%/src
 
 commands:
    customCommands:
-       - Meanbee\Commands\DownloadRemoteMedia
+       - Meanbee\DownloadRemoteMedia\Commands\DownloadRemoteMedia
