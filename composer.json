@@ -1,0 +1,20 @@
+{
+  "name": "meanbee/download-remote-media",
+  "description": "Download product images from production easily",
+  "license": "http://mit-license.org/",
+  "authors": [
+    {
+      "name": "Ash Smith",
+      "email": "ash.smith@meanbee.com"
+    }
+  ],
+  "require": {},
+  "require-dev": {
+    "n98/magerun": "*"
+  },
+  "autoload": {
+    "psr-0": {
+      "Meanbee": "src/"
+    }
+  }
+}
