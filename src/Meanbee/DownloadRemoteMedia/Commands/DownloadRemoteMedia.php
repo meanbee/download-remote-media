@@ -22,7 +22,7 @@ class DownloadRemoteMedia extends AbstractCommand
             ->addOption('show-skipped', null, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
             ->addOption('image-attributes', null, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
             ->addOption('no-overwrite', null, InputOption::VALUE_OPTIONAL, 'Images are overwritten by default. Use this option to disable', false)
-            ->setDescription('Test transactional emails easily.');
+            ->setDescription('Fetch product images from a remote store');
     }
 
     /**
