@@ -37,6 +37,7 @@ class DownloadRemoteMedia extends AbstractCommand
         $this->detectMagento($this->getOutput());
         if ($this->initMagento()) {
             $remote_url = $this->validateUrl($this->getInput()->getOption('remote-url'));
+            $this->prepareImageAttributes();
             $this->fetchImagesFromRemote($remote_url);
         }
     }
