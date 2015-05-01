@@ -19,8 +19,9 @@ class DownloadRemoteMedia extends AbstractCommand
             ->setName('media:fetch:products')
             ->addOption('remote-url', null, InputOption::VALUE_REQUIRED, 'The URL images should be fetched from')
             ->addOption('skus', null, InputOption::VALUE_OPTIONAL, 'CSV of SKUs to fetch images for')
-            ->addOption('show-skipped', false, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
-            ->addOption('image-attributes', false, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
+            ->addOption('show-skipped', null, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
+            ->addOption('image-attributes', null, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
+            ->addOption('no-overwrite', null, InputOption::VALUE_OPTIONAL, 'Images are overwritten by default. Use this option to disable', false)
             ->setDescription('Test transactional emails easily.');
     }
 
@@ -100,7 +101,7 @@ class DownloadRemoteMedia extends AbstractCommand
 
 
         // Don't attempt to download an image that already exists.
-        if (file_exists($local_file)) {
+        if (file_exists($local_file) && $this->getInput()->getOption('no-overwrite')) {
             $this->log("File exists... skipping", true);
             return;
         }
