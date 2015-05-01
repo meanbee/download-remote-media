@@ -20,6 +20,7 @@ class DownloadRemoteMedia extends AbstractCommand
             ->addOption('remote-url', null, InputOption::VALUE_REQUIRED, 'The URL images should be fetched from')
             ->addOption('skus', null, InputOption::VALUE_OPTIONAL, 'CSV of SKUs to fetch images for')
             ->addOption('show-skipped', false, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
+            ->addOption('image-attributes', false, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
             ->setDescription('Test transactional emails easily.');
     }
 
