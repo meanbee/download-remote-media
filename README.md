@@ -9,7 +9,7 @@ You just need to clone this repo into a ~/.n98-magerun/modules folder, then mage
     cd ~
     mkdir -p .n98-magerun/modules
     cd .n98-magerun/modules
-    git clone git@bitbucket.org:meanbee/download-remote-media.git
+    git clone git@github.com:meanbee/download-remote-media.git
     cd download-remote-media
     composer install
 
