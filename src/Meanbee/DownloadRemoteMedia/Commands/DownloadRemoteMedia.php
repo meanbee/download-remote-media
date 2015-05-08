@@ -19,7 +19,8 @@ class DownloadRemoteMedia extends AbstractCommand
             ->setName('media:fetch:products')
             ->addOption('remote-url', null, InputOption::VALUE_REQUIRED, 'The URL images should be fetched from')
             ->addOption('skus', null, InputOption::VALUE_OPTIONAL, 'CSV of SKUs to fetch images for')
-	    ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Number of SKUs to fetch images for')
+            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Number of SKUs to fetch images for')
+            ->addOption('type_ids', null, InputOption::VALUE_OPTIONAL, 'Product types to fetch images for (e.g. "simple,configurable")')
             ->addOption('show-skipped', null, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
             ->addOption('image-attributes', null, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
             ->addOption('no-overwrite', null, InputOption::VALUE_OPTIONAL, 'Images are overwritten by default. Use this option to disable', false)
@@ -71,12 +72,18 @@ class DownloadRemoteMedia extends AbstractCommand
         if (!empty($skus)) {
             $collection->addAttributeToFilter('sku', array('in' => $skus));
         }
-	$limit = $this->getLimit();
+        $limit = $this->getLimit();
         if (!empty($limit)) {
-	    $collection->addAttributeToSort('entity_id', 'DESC');
+            $collection->addAttributeToSort('entity_id', 'DESC');
             $collection->getSelect()->limit($limit);
         }
-	$collection->load();
+        $productTypes = $this->getProductTypes();
+        if (!empty($productTypes)) {
+            foreach ($productTypes as $productType) {
+                $collection->addAttributeToFilter('type_id',array('eq'=>$productType));
+            }
+        }
+        $collection->load();
         return $collection;
     }
 
@@ -186,6 +193,19 @@ class DownloadRemoteMedia extends AbstractCommand
     {
         if (($skus = $this->getInput()->getOption('skus')) !== null) {
             return explode(',', $skus);
+        }
+        return array();
+    }
+
+    /**
+     * Set types of product
+     *
+     * @return array
+     */
+    protected function getProductTypes()
+    {
+        if (($productTypes = $this->getInput()->getOption('type_ids')) !== null) {
+            return explode(',', $productTypes);
         }
         return array();
     }
