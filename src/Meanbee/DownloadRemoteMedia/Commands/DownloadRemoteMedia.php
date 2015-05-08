@@ -19,6 +19,7 @@ class DownloadRemoteMedia extends AbstractCommand
             ->setName('media:fetch:products')
             ->addOption('remote-url', null, InputOption::VALUE_REQUIRED, 'The URL images should be fetched from')
             ->addOption('skus', null, InputOption::VALUE_OPTIONAL, 'CSV of SKUs to fetch images for')
+	    ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Number of SKUs to fetch images for')
             ->addOption('show-skipped', null, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
             ->addOption('image-attributes', null, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
             ->addOption('no-overwrite', null, InputOption::VALUE_OPTIONAL, 'Images are overwritten by default. Use this option to disable', false)
@@ -70,7 +71,12 @@ class DownloadRemoteMedia extends AbstractCommand
         if (!empty($skus)) {
             $collection->addAttributeToFilter('sku', array('in' => $skus));
         }
-        $collection->load();
+	$limit = $this->getLimit();
+        if (!empty($limit)) {
+	    $collection->addAttributeToSort('entity_id', 'DESC');
+            $collection->getSelect()->limit($limit);
+        }
+	$collection->load();
         return $collection;
     }
 
@@ -182,6 +188,19 @@ class DownloadRemoteMedia extends AbstractCommand
             return explode(',', $skus);
         }
         return array();
+    }
+
+    /**
+     * Set limit of SKU collection.
+     *
+     * @return int
+     */
+    protected function getLimit()
+    {
+        if (($limit = $this->getInput()->getOption('limit')) !== null) {
+            return (int)$limit;
+        }
+        return 0;
     }
 
     /**
