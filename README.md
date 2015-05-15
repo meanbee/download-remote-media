@@ -26,3 +26,11 @@ Fetch only specific products by SKUs:
 Only want certain image attributes downloaded? No problem!
     
     n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --image-attributes=small_image,custom_image
+
+Only want to download the last 10 images
+    
+    n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --limit=10
+
+Only want to download images of configurable products
+    
+    n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --type_ids=configurable
