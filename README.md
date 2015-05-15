@@ -9,7 +9,7 @@ You just need to clone this repo into a ~/.n98-magerun/modules folder, then mage
     cd ~
     mkdir -p .n98-magerun/modules
     cd .n98-magerun/modules
-    git clone git@bitbucket.org:meanbee/download-remote-media.git
+    git clone git@github.com:meanbee/download-remote-media.git
     cd download-remote-media
     composer install
 
@@ -26,3 +26,11 @@ Fetch only specific products by SKUs:
 Only want certain image attributes downloaded? No problem!
     
     n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --image-attributes=small_image,custom_image
+
+Only want to download the last 10 images
+    
+    n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --limit=10
+
+Only want to download images of configurable products
+    
+    n98-magerun.phar media:fetch:products --remote-url=http://www.clientwebsite.com/ --type_ids=configurable
