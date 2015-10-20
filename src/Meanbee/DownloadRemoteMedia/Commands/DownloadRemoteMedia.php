@@ -19,7 +19,10 @@ class DownloadRemoteMedia extends AbstractCommand
         $this
             ->setName('media:fetch:products')
             ->addOption('remote-url', null, InputOption::VALUE_REQUIRED, 'The URL images should be fetched from')
+            ->addOption('store', null, InputOption::VALUE_OPTIONAL, 'store code, defaults to "default"', 'default')
             ->addOption('skus', null, InputOption::VALUE_OPTIONAL, 'CSV of SKUs to fetch images for')
+            ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Number of SKUs to fetch images for')
+            ->addOption('type_ids', null, InputOption::VALUE_OPTIONAL, 'Product types to fetch images for (e.g. "simple,configurable")')
             ->addOption('show-skipped', null, InputOption::VALUE_OPTIONAL, 'Hide/show messages that can skipped (defaults to hidden, useful for debugging)')
             ->addOption('image-attributes', null, InputOption::VALUE_OPTIONAL, 'CSV of Image attributes you would like to download, defaults to just the base image.')
             ->addOption('no-overwrite', null, InputOption::VALUE_OPTIONAL, 'Images are overwritten by default. Use this option to disable', false)
@@ -38,22 +41,47 @@ class DownloadRemoteMedia extends AbstractCommand
 
         $this->detectMagento($this->getOutput());
         if ($this->initMagento()) {
-            $remote_url = $this->validateUrl($this->getInput()->getOption('remote-url'));
+            // By choosing a store, we'll limit images to products in that store.
+            // Plus, magerun uses the admin store by default, which means flat tables aren't used.
+            $store = $this->getInput()->getOption('store');
+            \Mage::app()->setCurrentStore($store);
             $this->prepareImageAttributes();
-            $this->fetchImagesFromRemote($remote_url);
+
+            $remote_url = $this->validateUrl($this->getInput()->getOption('remote-url'));
+            $media_config = \Mage::getModel('catalog/product')->getMediaConfig();
+            $collection = $this->prepareCollection();
+
+            // We're using an iterator to reduce the amount data loaded into memory. As we don't need full catalog/product objects.
+            /** @var \Mage_Core_Model_Resource_Iterator $iterator */
+            $iterator = \Mage::getResourceSingleton('core/iterator');
+            $iterator->walk(
+                $collection->getSelect(),
+                array(
+                    array(
+                        $this,
+                        'fetchImagesFromRemote'
+                    )
+                ),
+                array(
+                    'remote_url' => $remote_url,
+                    'media_config' => $media_config
+                )
+            );
         }
     }
 
-    public function fetchImagesFromRemote($remote_url)
+    public function fetchImagesFromRemote($data)
     {
-        $collection = $this->prepareCollection();
+        $remote_url = $data['remote_url'];
+        $media_config = $data['media_config'];
 
-        /** @var \Mage_Catalog_Model_Product $product */
-        foreach ($collection as $product) {
-            $this->current_product = $product;
-            foreach ($this->getImageAttributes() as $image) {
-                $this->downloadImages($product, $image, $product->getMediaConfig(), $remote_url);
+        foreach ($this->getImageAttributes() as $image_attribute) {
+            if (!isset($data['row'][$image_attribute])) {
+                continue;
             }
+
+            $image = $data['row'][$image_attribute];
+            $this->downloadImages($image, $image_attribute, $media_config, $remote_url);
         }
     }
 
@@ -64,14 +92,24 @@ class DownloadRemoteMedia extends AbstractCommand
     {
         /** @var \Mage_Catalog_Model_Resource_Product_Collection $collection */
         $collection = \Mage::getModel('catalog/product')->getCollection();
-
         $collection->addAttributeToSelect($this->getImageAttributes());
 
         $skus = $this->getSkus();
         if (!empty($skus)) {
             $collection->addAttributeToFilter('sku', array('in' => $skus));
         }
-        $collection->load();
+
+        $limit = $this->getLimit();
+        if (!empty($limit)) {
+            $collection->addAttributeToSort('entity_id', 'DESC');
+            $collection->getSelect()->limit($limit);
+        }
+        $productTypes = $this->getProductTypes();
+        if (!empty($productTypes)) {
+            foreach ($productTypes as $productType) {
+                $collection->addAttributeToFilter('type_id',array('eq'=>$productType));
+            }
+        }
         return $collection;
     }
 
@@ -89,14 +127,13 @@ class DownloadRemoteMedia extends AbstractCommand
 
     /**
      *
-     * @param \Mage_Catalog_Model_Product $product
+     * @param string $image
      * @param string $image_attribute
      * @param \Mage_Catalog_Model_Product_Media_Config $media_config
      * @param $remote_url
      */
-    protected function downloadImages($product, $image_attribute, $media_config, $remote_url)
+    protected function downloadImages($image, $image_attribute, $media_config, $remote_url)
     {
-        $image = $product->getData($image_attribute);
         $base_path = $media_config->getBaseMediaPath();
         $local_file = $base_path . $image;
 
@@ -128,7 +165,7 @@ class DownloadRemoteMedia extends AbstractCommand
         }
 
         $local_file_dir = dirname($local_file);
-        $directory_exists =  $this->createDirectories($local_file_dir);
+        $directory_exists = $this->createDirectories($local_file_dir);
         if (!$directory_exists) {
             return;
         }
@@ -151,7 +188,7 @@ class DownloadRemoteMedia extends AbstractCommand
     protected function createDirectories($path)
     {
         if (is_dir($path) && !is_writable($path)) {
-            $this->log("Directory exists, but isn't writeable");
+            $this->log("Directory exists, but isn't writable");
             return false;
         }
 
@@ -197,6 +234,32 @@ class DownloadRemoteMedia extends AbstractCommand
     }
 
     /**
+     * Set types of product
+     *
+     * @return array
+     */
+    protected function getProductTypes()
+    {
+        if (($productTypes = $this->getInput()->getOption('type_ids')) !== null) {
+            return explode(',', $productTypes);
+        }
+        return array();
+    }
+
+    /**
+     * Set limit of SKU collection.
+     *
+     * @return int
+     */
+    protected function getLimit()
+    {
+        if (($limit = $this->getInput()->getOption('limit')) !== null) {
+            return (int)$limit;
+        }
+        return 0;
+    }
+
+    /**
      * Output a message to the console.
      *
      * @param $message
@@ -218,7 +281,7 @@ class DownloadRemoteMedia extends AbstractCommand
      */
     protected function showSkipped()
     {
-        return (bool) $this->getInput()->getOption('show-skipped');
+        return (bool)$this->getInput()->getOption('show-skipped');
     }
 
 }
