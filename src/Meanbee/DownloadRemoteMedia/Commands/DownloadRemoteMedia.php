@@ -12,6 +12,7 @@ class DownloadRemoteMedia extends AbstractCommand
     /** @var  $current_product \Mage_Catalog_Model_Product */
     protected $current_product;
     protected $image_attributes = array('image');
+    protected $repeat_images = array('no_selection'=>false);
 
     protected function configure()
     {
@@ -137,6 +138,17 @@ class DownloadRemoteMedia extends AbstractCommand
         $local_file = $base_path . $image;
 
 
+        if (!$image){
+            $this->log(sprintf('No image for product id: %s', $product->getId()));
+        }
+
+        if (isset($this->repeat_images[$image])){
+            if ($this->repeat_images[$image]){
+                $this->log(sprintf('Image already attempted: %s', $image));
+                return;
+            }
+            $this->repeat_images[$image] = true;
+        }
         // Don't attempt to download an image that already exists.
         if (file_exists($local_file) && $this->getInput()->getOption('no-overwrite')) {
             $this->log("File exists... skipping", true);
